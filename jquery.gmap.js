@@ -3,7 +3,6 @@
 *
 * @url         http://www.smashinglabs.pl/gmap
 * @author      Sebastian Poreba <sebastian.poreba@gmail.com>
-* @forked  Jimmy Lee
 * @version     3.2.0
 * @date        19.08.2011
 */
@@ -98,7 +97,7 @@
         addMapListener: function (event, callback) {
             var $data = this.data('gmap');
             if ($data.opts.log) { console.log('delayed addMapListener called'); }
-            if ($data.gmap !== undefined) {
+            if ($data.gmap != undefined) {
                 google.maps.event.addListener($data.gmap, event, callback);
             } else {
                 var that = this;
@@ -109,7 +108,7 @@
         addPanoramaListener: function (event, callback) {
             var $data = this.data('gmap');
             if ($data.opts.log) { console.log('delayed addPanoramaListener called'); }
-            if ($data.pano !== undefined) {
+            if ($data.pano != undefined) {
                 google.maps.event.addListener($data.pano, event, callback);
             } else {
                 var that = this;
@@ -121,21 +120,48 @@
             var $data = this.data('gmap');
             if ($data.opts.log) { console.log('delayed initPanorama called'); }
             if ($data.gmap !== undefined) {
-                //$data.gmap.setCenter(center);
-                $panorama = $data.gmap.getStreetView();
-                $panorama.setPosition(center);
-                $panorama.setPov({
-                    heading: 0,
-                    zoom: 1,
-                    pitch: 0
+                var svService = new google.maps.StreetViewService();
+                svService.getPanoramaByLocation(center, 50, function (panoData, status) {
+                    $panorama = $data.gmap.getStreetView();
+                    // If it fails, then just use default POV
+                    if (status != google.maps.StreetViewStatus.OK) {
+                        $panorama.setPosition(center);
+                        $panorama.setPov({
+                            heading: 0,
+                            zoom: 1,
+                            pitch: 0
+                        });
+                    } else {
+                        $panorama.setPosition(panoData.location.latLng);
+                        $panorama.setPov({
+                            //heading: methods._getAngle.apply(this, [center, panoData.location.latLng]),
+                            heading: methods._getAngle.apply(this, [panoData.location.latLng, center]),
+                            zoom: 1,
+                            pitch: 0
+                        });
+                    }
+                    // Save the data again
+                    $data.pano = $panorama;
+                    $(this).data('gmap', $data);
                 });
-                // Save the data again
-                $data.pano = $panorama;
-                $(this).data('gmap', $data);
             } else {
                 var that = this;
                 window.setTimeout(function () { methods._initPanorama.apply(that, [center]); }, 500);
             }
+        },
+
+        _getAngle: function (startLatLng, endLatLng) {
+            var dx = endLatLng.lat() - startLatLng.lat();
+            var dy = endLatLng.lng() - startLatLng.lng();
+            var rads = Math.atan2(dy, dx);
+            var degrees = rads * 57.2957795;
+
+            //            if (degrees >= 360) {
+            //                degrees -= 360;
+            //            } else if (degrees < 0) {
+            //                degrees += 360;
+            //            }
+            return degrees;
         },
 
         _onComplete: function () {
