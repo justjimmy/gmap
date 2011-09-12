@@ -134,8 +134,7 @@
                     } else {
                         $panorama.setPosition(panoData.location.latLng);
                         $panorama.setPov({
-                            //heading: methods._getAngle.apply(this, [center, panoData.location.latLng]),
-                            heading: methods._getAngle.apply(this, [panoData.location.latLng, center]),
+                            heading: $googlemaps.geometry.spherical.computeHeading(panoData.location.latLng, center),
                             zoom: 1,
                             pitch: 0
                         });
@@ -149,21 +148,7 @@
                 window.setTimeout(function () { methods._initPanorama.apply(that, [center]); }, 500);
             }
         },
-
-        _getAngle: function (startLatLng, endLatLng) {
-            var dx = endLatLng.lat() - startLatLng.lat();
-            var dy = endLatLng.lng() - startLatLng.lng();
-            var rads = Math.atan2(dy, dx);
-            var degrees = rads * 57.2957795;
-
-            //            if (degrees >= 360) {
-            //                degrees -= 360;
-            //            } else if (degrees < 0) {
-            //                degrees += 360;
-            //            }
-            return degrees;
-        },
-
+           
         _onComplete: function () {
             var $data = this.data('gmap'),
                 that = this;
